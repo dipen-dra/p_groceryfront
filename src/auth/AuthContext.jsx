@@ -1,43 +1,67 @@
-import { createContext, useState, useEffect } from "react";
 
-export const AuthContext = createContext()
+
+
+import { createContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
+export const AuthContext = createContext();
 
 const AuthContextProvider = ({ children }) => {
-    const [user, setUser] = useState(null)
-    const [loading, setLoading] = useState(true)
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
-    const login = (userData, token) => {
-        setLoading(true)
-        localStorage.setItem("user", JSON.stringify(userData))
-        localStorage.setItem("token", token)
-        setUser(userData)
-        setLoading(false)
-    }
-    const logout = () => {
-        setLoading(true)
-        localStorage.removeItem("user")
-        localStorage.removeItem("token")
-        setUser(null)
-        setLoading(false)
-    }
+    // This effect runs once when the app loads to check for a logged-in user.
     useEffect(() => {
-        setLoading(true)
-        const token = localStorage.getItem("token")
-        const storedUser = localStorage.getItem("user")
-        console.log(token, storedUser)
-        if (token && storedUser) {
-            setUser(JSON.parse(storedUser))
-        } else {
-            logout()
+        try {
+            const storedUser = localStorage.getItem("user");
+            const token = localStorage.getItem("token");
+
+            if (storedUser && token) {
+                setUser(JSON.parse(storedUser));
+            }
+        } catch (error) {
+            // If there's an error, clear storage to be safe.
+            console.error("Failed to parse user from localStorage", error);
+            localStorage.clear();
+        } finally {
+            setLoading(false);
         }
-        setLoading(false)
-    }, [])
+    }, []);
+
+    /**
+     * FIX: The login function now accepts a single `data` object, which is the
+     * entire response from the backend API. It correctly extracts the user
+     * object (from data.data) and the token (from data.token).
+     */
+    const login = (data) => {
+        if (data && data.data && data.token) {
+            const userData = data.data;
+            const token = data.token;
+            
+            localStorage.setItem("user", JSON.stringify(userData));
+            localStorage.setItem("token", token);
+            setUser(userData);
+        } else {
+            console.error("Login failed: Invalid data received from server.", data);
+        }
+    };
+
+    const logout = () => {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        setUser(null);
+        navigate("/", { replace: true });
+    };
+
     return (
         <AuthContext.Provider
-            value={{user, loading, login, logout, isAuthenticated: user !== null}}
+            value={{ user, loading, login, logout, isAuthenticated: !!user }}
         >
-            {children}
+            {!loading && children}
         </AuthContext.Provider>
-    )
-}
-export default AuthContextProvider
+    );
+};
+
+export default AuthContextProvider;
+

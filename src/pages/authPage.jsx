@@ -37,3 +37,4 @@ export const AuthPage = () => {
     </NavigationContext.Provider>
   );
 };
+export default AuthPage;
