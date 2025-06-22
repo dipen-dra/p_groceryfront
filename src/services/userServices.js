@@ -3,7 +3,9 @@ import {
     fetchCategoriesApi,
     fetchUserProfileApi,
     fetchUserOrdersApi,
-    placeOrderApi
+    placeOrderApi,
+    // --- CORRECTED IMPORT ---
+    updateUserProfilePictureApi 
 } from '../api/userApi.js';
 
 export const fetchProducts = async () => {
@@ -28,5 +30,12 @@ export const fetchUserOrders = async () => {
 
 export const placeOrder = async (orderData) => {
     const response = await placeOrderApi(orderData);
+    return response.data;
+};
+
+// --- CORRECTED FUNCTION ---
+// This function now correctly calls 'updateUserProfilePictureApi'
+export const updateUserProfilePicture = async (formData) => {
+    const response = await updateUserProfilePictureApi(formData);
     return response.data;
 };
