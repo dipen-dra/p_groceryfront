@@ -14,17 +14,22 @@ const HeroSection = () => {
         <source src={video} type="video/mp4" />
         Your browser does not support the video tag.
       </video>
-      <div className="absolute inset-0 flex items-center justify-center mt-50">
-        <div className="flex items-center gap-4">
-          <a 
-            href="/products" 
-            className="px-8 py-3 bg-primary text-white rounded hover:bg-primary-dull transition"
+
+      {/* Overlay for better button visibility */}
+      <div className="absolute inset-0 bg-black/30"></div>
+
+      {/* Centered Action Buttons - Positioned Lower */}
+      <div className="absolute inset-0 flex items-end justify-center p-4 pb-24 sm:pb-32">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <a
+            href="/dashboard/shop"
+            className="px-8 py-3 bg-green-600 text-white font-bold rounded-full hover:bg-green-700 transition-transform transform hover:scale-105 w-full sm:w-auto"
           >
             Shop Now
           </a>
-          <a 
-            href="/products" 
-            className="px-8 py-3 bg-primary text-white rounded hover:bg-primary-dull transition"
+          <a
+            href="/#categories"
+            className="px-8 py-3 bg-white/20 backdrop-blur-sm border border-white/50 text-white font-bold rounded-full hover:bg-white/30 transition w-full sm:w-auto"
           >
             Explore Deals
           </a>
