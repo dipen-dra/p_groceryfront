@@ -1,4 +1,3 @@
-// ✅ UserDashboard.jsx (Updated)
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { Home, ShoppingCart, Package, User, LogOut, Menu, X, ChevronDown, AlertTriangle } from 'lucide-react';
@@ -14,6 +13,7 @@ import ProfilePage from './ProfilePage.jsx';
 import CartPage from './CartPage.jsx';
 import CheckoutPage from './CheckoutPage.jsx';
 import { Avatar } from '../components/Avatar';
+import ShoppingList from '../components/ShoopingList.jsx'; // <-- 1. IMPORT THE NEW COMPONENT
 
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
@@ -67,7 +67,8 @@ const UserDashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const profileRef = useRef(null);
   const location = useLocation();
-  const isShopPage = location.pathname.endsWith('/shop');
+  // This handy variable already checks if we are on the shop page
+  const isShopPage = location.pathname.endsWith('/dashboard/shop') || location.pathname.endsWith('/dashboard');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -173,6 +174,10 @@ const UserDashboard = () => {
             <Route path="*" element={<Navigate to="shop" replace />} />
           </Routes>
         </main>
+        
+        {/* -- 2. CONDITIONALLY RENDER THE SHOPPING LIST -- */}
+        {isShopPage && <ShoppingList />}
+
       </div>
       <ConfirmationModal
         isOpen={isLogoutConfirmOpen}
