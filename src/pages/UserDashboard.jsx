@@ -1,6 +1,6 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
-import { Home, ShoppingCart, Package, User, LogOut, Menu, X, ChevronDown, AlertTriangle, CreditCard, Truck } from 'lucide-react';
+import { Home, ShoppingCart, Package, User, LogOut, Menu, X, ChevronDown, AlertTriangle, CreditCard, Truck, Wallet, CheckCircle, XCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { AuthContext } from '../auth/AuthContext.jsx';
 import { CartContext } from '../context/CartContext.jsx';
@@ -10,6 +10,8 @@ import axios from 'axios';
 
 // Import other pages
 import ProductsPage from './ProductsPage.jsx';
+// Assuming OrdersPage is now in its own file as well, for consistency
+// import OrdersPage from './OrdersPage.jsx';
 import ProfilePage from './ProfilePage.jsx';
 import CartPage from './CartPage.jsx';
 import CheckoutPage from './CheckoutPage.jsx';
@@ -38,8 +40,12 @@ const fetchMyOrders = async () => {
     return data.orders;
 };
 
+const fetchPaymentHistory = async () => {
+    const { data } = await userApi.get('/orders/payment-history');
+    return data.history;
+};
 
-// --- New and Improved OrdersPage Component ---
+// --- OrdersPage Component ---
 const OrdersPage = () => {
     const { data: orders, isLoading, isError, error } = useQuery({ 
         queryKey: ['myOrders'], 
@@ -123,6 +129,76 @@ const OrdersPage = () => {
                     <Link to="/dashboard/shop" className="mt-6 inline-block bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
                         Go to Shop
                     </Link>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- New PaymentsPage Component ---
+const PaymentsPage = () => {
+    const { data: history, isLoading, isError, error } = useQuery({
+        queryKey: ['paymentHistory'],
+        queryFn: fetchPaymentHistory,
+    });
+
+    const PaymentStatusBadge = ({ status }) => {
+        const isSuccess = status !== 'Pending Payment';
+        const bgColor = isSuccess ? 'bg-green-100' : 'bg-orange-100';
+        const textColor = isSuccess ? 'text-green-800' : 'text-orange-800';
+        const Icon = isSuccess ? CheckCircle : XCircle;
+        const text = isSuccess ? 'Successful' : 'Incomplete';
+
+        return (
+            <div className={`px-3 py-1.5 text-sm font-semibold rounded-full flex items-center justify-center gap-2 ${bgColor} ${textColor}`}>
+                <Icon size={16} />
+                <span>{text}</span>
+            </div>
+        );
+    };
+
+    if (isLoading) return <div className="text-center p-12 text-gray-500">Loading payment history...</div>;
+    if (isError) return <div className="text-center p-12 text-red-600 bg-red-50 rounded-lg">Error: {error.message}</div>;
+
+    return (
+        <div className="space-y-6">
+            <h1 className="text-3xl font-bold text-gray-800">My Payments</h1>
+            {history && history.length > 0 ? (
+                 <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="text-sm text-gray-500 uppercase bg-gray-50">
+                                <tr>
+                                    <th className="p-4">Date</th>
+                                    <th className="p-4">Transaction / Order ID</th>
+                                    <th className="p-4">Payment Method</th>
+                                    <th className="p-4 text-right">Amount</th>
+                                    <th className="p-4 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {history.map(item => (
+                                    <tr key={item._id} className="border-b border-gray-200">
+                                        <td className="p-4 text-gray-600">{new Date(item.createdAt).toLocaleDateString()}</td>
+                                        <td className="p-4 font-mono text-gray-800">#{item._id.slice(-8)}</td>
+                                        <td className="p-4 text-gray-600">{item.paymentMethod}</td>
+                                        <td className="p-4 text-right font-semibold">₹{item.amount.toFixed(2)}</td>
+                                        <td className="p-4">
+                                            <div className="flex justify-center">
+                                                <PaymentStatusBadge status={item.status} />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ) : (
+                <div className="text-center p-10 bg-white rounded-lg shadow-md">
+                    <Wallet size={48} className="mx-auto text-gray-400" />
+                    <h3 className="mt-4 text-xl font-semibold text-gray-800">No Payment History</h3>
+                    <p className="mt-2 text-gray-500">All your transactions, both complete and incomplete, will appear here.</p>
                 </div>
             )}
         </div>
@@ -225,6 +301,7 @@ const UserDashboard = () => {
       <nav className="flex-1 px-4 py-6 space-y-2">
         <NavLink to="/dashboard/shop" icon={Home}>Shop</NavLink>
         <NavLink to="/dashboard/orders" icon={Package}>My Orders</NavLink>
+        <NavLink to="/dashboard/payments" icon={Wallet}>My Payments</NavLink>
         <NavLink to="/dashboard/profile" icon={User}>My Profile</NavLink>
       </nav>
       <div className="p-4 border-t">
@@ -284,6 +361,7 @@ const UserDashboard = () => {
           <Routes>
             <Route path="shop" element={<ProductsPage selectedCategory={selectedCategory} />} />
             <Route path="orders" element={<OrdersPage />} />
+            <Route path="payments" element={<PaymentsPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="cart" element={<CartPage />} />
             <Route path="checkout" element={<CheckoutPage />} />
