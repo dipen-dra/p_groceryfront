@@ -182,7 +182,7 @@ const CheckoutPage = () => {
                                         <input type="radio" id="esewa" name="paymentMethod" value="esewa" checked={paymentMethod === 'esewa'} readOnly className="h-4 w-4 text-green-600" />
                                         <label htmlFor="esewa" className="ml-3 text-sm font-medium text-gray-700">Pay with eSewa</label>
                                     </div>
-                                    <img src="/esewa_logo.png" alt="eSewa" className="h-6" />
+                                    <img src="/esewalogo.png" alt="eSewa" className="h-6" />
                                 </div>
                             </div>
                         </div>
