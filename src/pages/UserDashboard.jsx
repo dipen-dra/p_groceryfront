@@ -1,20 +1,136 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
-import { Home, ShoppingCart, Package, User, LogOut, Menu, X, ChevronDown, AlertTriangle } from 'lucide-react';
+import { Home, ShoppingCart, Package, User, LogOut, Menu, X, ChevronDown, AlertTriangle, CreditCard, Truck } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { AuthContext } from '../auth/AuthContext.jsx';
 import { CartContext } from '../context/CartContext.jsx';
 import { fetchCategories } from '../services/userServices.js';
 import { SERVER_BASE_URL } from '../api/api.js';
+import axios from 'axios';
 
+// Import other pages
 import ProductsPage from './ProductsPage.jsx';
-import OrdersPage from './OrderPage.jsx';
 import ProfilePage from './ProfilePage.jsx';
 import CartPage from './CartPage.jsx';
 import CheckoutPage from './CheckoutPage.jsx';
 import { Avatar } from '../components/Avatar';
-import ShoppingList from '../components/ShoopingList.jsx'; // <-- 1. IMPORT THE NEW COMPONENT
+import ShoppingList from '../components/ShoopingList.jsx'; 
 
+// --- API Setup for User ---
+const userApi = axios.create({
+    baseURL: `${SERVER_BASE_URL}/api`,
+    headers: { 'Content-Type': 'application/json' }
+});
+
+userApi.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+const fetchMyOrders = async () => {
+    const { data } = await userApi.get('/orders/myorders');
+    return data.orders;
+};
+
+
+// --- New and Improved OrdersPage Component ---
+const OrdersPage = () => {
+    const { data: orders, isLoading, isError, error } = useQuery({ 
+        queryKey: ['myOrders'], 
+        queryFn: fetchMyOrders 
+    });
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Delivered': return 'bg-green-100 text-green-800';
+            case 'Shipped': return 'bg-yellow-100 text-yellow-800';
+            case 'Pending': return 'bg-blue-100 text-blue-800';
+            case 'Cancelled': return 'bg-red-100 text-red-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    if (isLoading) {
+        return <div className="text-center p-12 text-gray-500">Loading your orders...</div>;
+    }
+    if (isError) {
+        return <div className="text-center p-12 text-red-600 bg-red-50 rounded-lg">Error: {error.message}</div>;
+    }
+
+    return (
+        <div className="space-y-6">
+            <h1 className="text-3xl font-bold text-gray-800">My Orders</h1>
+            {orders && orders.length > 0 ? (
+                <div className="space-y-6">
+                    {orders.map(order => (
+                        <div key={order._id} className="bg-white rounded-xl shadow-md overflow-hidden transition-shadow hover:shadow-lg">
+                            <div className="p-4 bg-gray-50 border-b flex flex-wrap justify-between items-center gap-x-6 gap-y-4">
+                                <div>
+                                    <p className="text-sm text-gray-500">Order ID</p>
+                                    <p className="font-mono font-semibold text-gray-800">#{order._id.slice(-8)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Date Placed</p>
+                                    <p className="font-semibold text-gray-800">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Total</p>
+                                    <p className="font-semibold text-gray-800">₹{order.amount.toFixed(2)}</p>
+                                </div>
+                                <div className={`px-3 py-1.5 text-sm font-semibold rounded-full flex items-center gap-2 ${getStatusColor(order.status)}`}>
+                                    <Truck size={16} />
+                                    {order.status}
+                                </div>
+                            </div>
+                            <div className="p-5">
+                                <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+                                    <CreditCard size={16} />
+                                    <span>Payment Method: <span className="font-semibold">{order.paymentMethod}</span></span>
+                                </div>
+                                <h4 className="text-md font-semibold text-gray-700 mb-3">Items in this order:</h4>
+                                <div className="space-y-3">
+                                    {order.items.map((item, index) => (
+                                        <div key={item.product || index} className="flex items-center gap-4">
+                                            <img 
+                                                src={item.imageUrl} 
+                                                alt={item.name} 
+                                                className="w-16 h-16 object-cover rounded-md flex-shrink-0 bg-gray-100"
+                                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100/CCCCCC/FFFFFF?text=Img'; }}
+                                            />
+                                            <div className="flex-grow">
+                                                <p className="font-semibold text-gray-800">{item.name}</p>
+                                                <p className="text-sm text-gray-500">Qty: {item.quantity} × ₹{item.price.toFixed(2)}</p>
+                                            </div>
+                                            <p className="font-medium text-gray-700">₹{(item.price * item.quantity).toFixed(2)}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center p-10 bg-white rounded-lg shadow-md">
+                    <Package size={48} className="mx-auto text-gray-400" />
+                    <h3 className="mt-4 text-xl font-semibold text-gray-800">No Orders Yet</h3>
+                    <p className="mt-2 text-gray-500">You haven't placed any orders. Start shopping to see them here!</p>
+                    <Link to="/dashboard/shop" className="mt-6 inline-block bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                        Go to Shop
+                    </Link>
+                </div>
+            )}
+        </div>
+    );
+};
+
+
+// --- Reusable Components ---
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
   return (
@@ -59,6 +175,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   );
 };
 
+// --- Main UserDashboard Component ---
 const UserDashboard = () => {
   const { user, logout } = useContext(AuthContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -67,7 +184,6 @@ const UserDashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const profileRef = useRef(null);
   const location = useLocation();
-  // This handy variable already checks if we are on the shop page
   const isShopPage = location.pathname.endsWith('/dashboard/shop') || location.pathname.endsWith('/dashboard');
 
   useEffect(() => {
@@ -175,7 +291,6 @@ const UserDashboard = () => {
           </Routes>
         </main>
         
-        {/* -- 2. CONDITIONALLY RENDER THE SHOPPING LIST -- */}
         {isShopPage && <ShoppingList />}
 
       </div>
