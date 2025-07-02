@@ -1,8 +1,8 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useEffect } from 'react'; // 1. Import useEffect
+import { useQuery, useQueryClient } from '@tanstack/react-query'; // 2. Import useQueryClient
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Loader2, AlertTriangle, Package, Truck, CreditCard } from 'lucide-react';
+import { Loader2, AlertTriangle, Package, Truck } from 'lucide-react';
 import { SERVER_BASE_URL } from '../api/api.js';
 
 const userApi = axios.create({ baseURL: `${SERVER_BASE_URL}/api` });
@@ -18,16 +18,24 @@ const fetchMyOrders = async () => {
 };
 
 export const MyOrdersPage = () => {
+    const queryClient = useQueryClient(); // 3. Get the query client instance
     const { data: orders, isLoading, isError, error } = useQuery({ 
         queryKey: ['myOrders'], 
         queryFn: fetchMyOrders 
     });
 
+    // 4. Add the effect to invalidate the user profile query
+    useEffect(() => {
+        // This tells React Query to refetch the user's profile data (and points)
+        // every time this component is viewed.
+        queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+    }, [queryClient]);
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'Delivered': return 'bg-green-100 text-green-800';
-            case 'Shipped': return 'bg-yellow-100 text-yellow-800';
-            case 'Pending': return 'bg-blue-100 text-blue-800';
+            case 'Shipped': return 'bg-blue-100 text-blue-800';
+            case 'Pending': return 'bg-yellow-100 text-yellow-800';
             case 'Cancelled': return 'bg-red-100 text-red-800';
             default: return 'bg-gray-100 text-gray-800';
         }
@@ -73,7 +81,7 @@ export const MyOrdersPage = () => {
                                 <div className="space-y-3">
                                     {order.items.map((item, index) => (
                                         <div key={item.product || index} className="flex items-center gap-4">
-                                            <img src={item.imageUrl} alt={item.name} className="w-16 h-16 object-cover rounded-md flex-shrink-0 bg-gray-100" />
+                                            <img src={`${SERVER_BASE_URL}${item.imageUrl}`} alt={item.name} className="w-16 h-16 object-cover rounded-md flex-shrink-0 bg-gray-100" />
                                             <div className="flex-grow">
                                                 <p className="font-semibold text-gray-800">{item.name}</p>
                                                 <p className="text-sm text-gray-500">Qty: {item.quantity} × ₹{item.price.toFixed(2)}</p>
@@ -91,7 +99,7 @@ export const MyOrdersPage = () => {
                     <Package size={48} className="mx-auto text-gray-400" />
                     <h3 className="mt-4 text-xl font-semibold text-gray-800">No Orders Yet</h3>
                     <p className="mt-2 text-gray-500">You haven't placed any orders. Start shopping to see them here!</p>
-                    <Link to="/dashboard/shop" className="mt-6 inline-block bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                    <Link to="/shop" className="mt-6 inline-block bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
                         Go to Shop
                     </Link>
                 </div>
