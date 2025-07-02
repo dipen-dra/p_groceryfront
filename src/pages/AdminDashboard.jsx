@@ -647,7 +647,7 @@ const AdminDashboard = () => {
         <div className="flex h-screen bg-gray-100 font-sans text-gray-900">
             <div className={`fixed inset-0 z-40 flex lg:hidden transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="w-72 bg-white shadow-lg flex flex-col"><SidebarContent /></div>
-                <div className="flex-1 bg-black bg-opacity-50" onClick={() => setIsSidebarOpen(false)}></div>
+                <div className="flex-1" onClick={() => setIsSidebarOpen(false)}></div>
             </div>
             <aside className="w-72 bg-white shadow-md hidden lg:flex flex-col flex-shrink-0"><SidebarContent /></aside>
             <div className="flex-1 flex flex-col overflow-hidden">
