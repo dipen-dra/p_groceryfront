@@ -1,14 +1,19 @@
+
 import React, { useState, useEffect, useContext } from 'react';
 import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// CORRECTED: Charting components are imported from 'recharts'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { Plus, Edit, Trash2, Search, Users, DollarSign, LogOut, Menu, X, AlertTriangle, ShoppingCart, Package, ClipboardList, Tag, Home as HomeIcon, Mail, PhoneCallIcon, User as UserIcon } from 'lucide-react';
+// CORRECTED: Icon components are imported from 'lucide-react'
+import { Plus, Edit, Trash2, Search, Users, DollarSign, LogOut, Menu, X, AlertTriangle, ShoppingCart, Package, ClipboardList, Tag, Home as HomeIcon, Mail, PhoneCallIcon, User as UserIcon, MessageSquare } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
 import dayjs from 'dayjs';
-import { AuthContext } from '../auth/AuthContext'; // Import AuthContext
-import { Avatar } from '../components/Avatar'; // Import Avatar component
-import AdminProfilePage from './AdminProfilePage'; // Import the new profile page
+import { AuthContext } from '../auth/AuthContext';
+import { Avatar } from '../components/Avatar';
+import AdminProfilePage from './AdminProfilePage';
+import { useChatbot } from '../hooks/useChatbot';
+import { Chatbot } from '../components/Chatbot';
 
 const queryClient = new QueryClient();
 
@@ -569,9 +574,22 @@ const CategoryFormModal = ({ isOpen, onClose, onSave, category }) => {
 const AdminDashboard = () => {
     const [activePage, setActivePage] = useState('dashboard');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isLogoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
     const { user, logout } = useContext(AuthContext);
 
+    // CHATBOT & LOGOUT HOOKS
+    const { isChatbotVisible, toggleChatbot, closeChatbot } = useChatbot();
+    const [isLogoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+
+    const handleLogout = () => {
+        setLogoutConfirmOpen(false);
+        logout();
+        window.location.href = '/';
+    };
+    
+    const confirmLogoutFromChatbot = () => {
+        closeChatbot();
+        setTimeout(() => setLogoutConfirmOpen(true), 100);
+    };
 
     useEffect(() => {
         const handleHashChange = () => {
@@ -587,11 +605,6 @@ const AdminDashboard = () => {
         handleHashChange();
         return () => window.removeEventListener('hashchange', handleHashChange);
     }, []);
-
-    const handleLogout = () => {
-        logout();
-        window.location.href = '/';
-    };
 
     const renderPage = () => {
         switch (activePage) {
@@ -666,6 +679,24 @@ const AdminDashboard = () => {
                 </header>
                 <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6 md:p-8">{renderPage()}</main>
             </div>
+            
+            {/* --- FLOATING CHATBOT --- */}
+            <div className="fixed bottom-6 right-6 z-30">
+                <button
+                    onClick={toggleChatbot}
+                    className="p-4 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition-transform transform hover:scale-110"
+                    aria-label="Toggle Chatbot"
+                >
+                    {isChatbotVisible ? <X size={24} /> : <MessageSquare size={24} />}
+                </button>
+            </div>
+            
+            <Chatbot 
+                isVisible={isChatbotVisible} 
+                onClose={closeChatbot}
+                onConfirmLogout={confirmLogoutFromChatbot}
+            />
+
             <ConfirmationModal
                 isOpen={isLogoutConfirmOpen}
                 onClose={() => {
