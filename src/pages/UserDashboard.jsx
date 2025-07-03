@@ -106,7 +106,7 @@ const UserDashboard = () => {
         <div className="flex flex-col h-full bg-white">
             <div className="p-4 flex items-center justify-between border-b">
                 <Link to="/dashboard/shop" className="flex items-center gap-2">
-                    <img src="/hamro.png" alt="Hamro Grocery" className="h-12 w-auto" />
+                    <img src="/hamro2.png" alt="Hamro Grocery" className="h-12 w-auto" />
                 </Link>
                 <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-gray-500">
                     <X size={24} />
