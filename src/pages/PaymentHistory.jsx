@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react'; // 1. Import useEffect
-import { useQuery, useQueryClient } from '@tanstack/react-query'; // 2. Import useQueryClient
+import React, { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { Loader2, AlertTriangle, CreditCard } from 'lucide-react';
+// 🟢 CHANGE: Import new icons for status chips
+import { Loader2, AlertTriangle, CreditCard, CheckCircle2, XCircle, Clock } from 'lucide-react';
 
 const SERVER_BASE_URL = "http://localhost:8081";
 
@@ -15,29 +16,52 @@ const fetchPaymentHistory = async () => {
     return data.history;
 };
 
+// 🟢 CHANGE: Update the getStatusChip function to include icons
 const getStatusChip = (status) => {
     switch (status) {
         case 'Delivered':
         case 'Pending':
         case 'Shipped':
-              return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Paid</span>;
+            return (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                    <CheckCircle2 size={14} />
+                    Successful
+                </span>
+            );
         case 'Pending Payment':
-            return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Incomplete</span>;
+            return (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                    <Clock size={14} />
+                    Incomplete
+                </span>
+            );
         case 'Cancelled':
-              return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Failed/Cancelled</span>;
+            return (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                    <XCircle size={14} />
+                    Cancelled
+                </span>
+            );
         default:
-            return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">{status}</span>;
+            return (
+                <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                    {status}
+                </span>
+            );
     }
 };
 
+
 export const PaymentHistoryPage = () => {
-    const queryClient = useQueryClient(); // 3. Get the query client instance
+    const queryClient = useQueryClient();
     const { data: history, isLoading, isError, error } = useQuery({
         queryKey: ['paymentHistory'],
         queryFn: fetchPaymentHistory,
     });
 
-    // 4. Add the effect to invalidate the user profile query
+    // When this component is viewed, invalidate the userProfile query.
+    // This ensures that when the user navigates back to the profile view,
+    // the grocery points and other data are fresh.
     useEffect(() => {
         queryClient.invalidateQueries({ queryKey: ['userProfile'] });
     }, [queryClient]);
